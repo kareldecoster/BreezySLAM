@@ -29,12 +29,13 @@ LIDAR_DEVICE            = '/dev/ttyO1'
 from breezyslam.algorithms import VLP_RMHC_SLAM
 from breezyslam.components import RPLidar as LaserModel
 
-from rplidar import RPLidar as Lidar
+from rplidar import RPLidar
 
 from PIL import Image
 
 import sys
 import signal
+import time
 
 #GLOBALS
 done = 0
@@ -52,20 +53,19 @@ def signal_handler(signal, frame):
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
     # Connect to Lidar unit
-    lidar = Lidar(LIDAR_DEVICE)
+    lidar = RPLidar(LIDAR_DEVICE)
     
     # Create an RMHC SLAM object with a laser model and optional robot model
     slam = VLP_RMHC_SLAM(LaserModel(), MAP_SIZE_PIXELS, MAP_SIZE_METERS)
-
-    # Set up a SLAM display
-    #display = SlamShow(MAP_SIZE_PIXELS, MAP_SIZE_METERS*1000/MAP_SIZE_PIXELS, 'SLAM')
 
     # Initialize an empty trajectory
     trajectory = []
 
     # Initialize empty map
     mapbytes = bytearray(MAP_SIZE_PIXELS * MAP_SIZE_PIXELS)
-    
+    print "starting sleep.."
+    time.sleep(120)
+    print "waking up.."
     while done == 0:
 
         # Update SLAM with current Lidar scan, using first element of (scan, quality) pairs
@@ -80,9 +80,6 @@ if __name__ == '__main__':
         x, y, theta = slam.getpos()
         
         trajectory.append((x,y))
-		
-    # Tell lidar to shutdown
-    lidar.set_exitflag()
         
     # Get current map bytes as grayscale
     slam.getmap(mapbytes)
@@ -100,6 +97,9 @@ if __name__ == '__main__':
     # Save map and trajectory as PNG file
     image = Image.frombuffer('L', (MAP_SIZE_PIXELS, MAP_SIZE_PIXELS), mapbytes, 'raw', 'L', 0, 1)
     image.save('slam_map.png')
+    
+    # Tell lidar to shutdown
+    lidar.set_exitflag()
 
     exit(0)
      
