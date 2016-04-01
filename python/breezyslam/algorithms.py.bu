@@ -33,8 +33,11 @@ _DEFAULT_HOLE_WIDTH_MM       = 600
 
 # Random mutation hill-climbing (RMHC) params
 _DEFAULT_SIGMA_XY_MM         = 100
+_VLP_SIGMA_XY_MM			 = 50
 _DEFAULT_SIGMA_THETA_DEGREES = 20
 _DEFAULT_MAX_SEARCH_ITER     = 1000
+_VLP_MAX_SEARCH_ITER	     = 100
+
 
 # CoreSLAM class ------------------------------------------------------------------------------------------------------
 
@@ -303,4 +306,128 @@ class Deterministic_SLAM(SinglePositionSLAM):
         
         return start_position.copy()
         
+  # VLP_SLAM class ---------------------------------------------------------------------------------------------
   
+class VLP_SLAM(SinglePositionSLAM):
+    '''
+    VLP_SLAM implements the _getNewPosition() method of SinglePositionSLAM by reading in a x and y value
+    from a file. The values are expressed in meters. They are written by the mercatord daemon wich uses
+    visual light positioning. Mercatord can be found at http://github.com/kareldecoster/mercator
+    '''
+    
+    def __init__(self, laser, map_size_pixels, map_size_meters,
+                map_quality=_DEFAULT_MAP_QUALITY, hole_width_mm=_DEFAULT_HOLE_WIDTH_MM):
+        '''
+        Creates a VLP_Slam object suitable for updating with new Lidar and odometry data.
+        laser is a Laser object representing the specifications of your Lidar unit
+        map_size_pixels is the size of the square map in pixels
+        map_size_meters is the size of the square map in meters
+        quality from 0 through 255 determines integration speed of scan into map
+        hole_width_mm determines width of obstacles (walls)
+        '''
+        
+        SinglePositionSLAM.__init__(self, laser, map_size_pixels, map_size_meters, 
+            map_quality, hole_width_mm)                    
+       
+    def _getNewPosition(self, start_position):
+        '''
+        Implements the _getNewPosition() method of SinglePositionSLAM. Reads in x and y coordinates from
+        files /var/lib/mercator/x and /var/lib/mercator/y. The mercatord daemon writes the position 
+        obtained by visual light positioning here. The values posted are in meters. Mercatord can be found at http://github.com/kareldecoster/mercator
+        '''
+        file_up = fopen("/var/lib/mercator/isup","r")
+        if(int(file_up.read(1)) == 1):
+            file_x = open("/var/lib/mercator/x","r")
+            self.position.x_mm = 1000*float(file_x.read(10))
+            file_y = open("/var/lib/mercator/y", "r")
+            self.position.y_mm = 1000*float(file_y.read(10))
+            file_theta = open("/var/lib/mercator/theta","r")
+            self.position.theta_degrees = float(file_theta.read(10))
+            file_x.close()
+            file_y.close()
+            file_theta.close()
+
+            file_up.close()
+            return (self.position.x_mm, self.position.y_mm, self.position.theta_degrees)
+
+        else:
+            return start_position.copy()
+			
+			
+# VLP_RMHC_SLAM class ------------------------------------------------------------------------------------------------------
+
+class VLP_RMHC_SLAM(SinglePositionSLAM):
+    '''
+    VLPRMHC_SLAM implements the _getNewPosition() method of SinglePositionSLAM using Random-Mutation Hill-Climbing
+    search.  Uses its own internal pseudorandom-number generator for efficiency. Uses positions acquired from VLP as
+    as starting values for the algorithm.
+    '''
+    
+    def __init__(self, laser, map_size_pixels, map_size_meters, 
+            map_quality=_DEFAULT_MAP_QUALITY, hole_width_mm=100,
+            random_seed=None, sigma_xy_mm=_VLP_SIGMA_XY_MM, sigma_theta_degrees=_DEFAULT_SIGMA_THETA_DEGREES, 
+            max_search_iter=_VLP_MAX_SEARCH_ITER):
+        '''
+        Creates a RMHCSlam object suitable for updating with new Lidar and odometry data.
+        laser is a Laser object representing the specifications of your Lidar unit
+        map_size_pixels is the size of the square map in pixels
+        map_size_meters is the size of the square map in meters
+        quality from 0 through 255 determines integration speed of scan into map
+        hole_width_mm determines width of obstacles (walls)
+        random_seed supports reproducible results; defaults to system time if unspecified
+        sigma_xy_mm specifies the standard deviation in millimeters of the normal distribution of 
+           the (X,Y) component of position for RMHC search
+        sigma_theta_degrees specifies the standard deviation in degrees of the normal distribution of 
+           the rotational component of position for RMHC search
+        max_search_iter specifies the maximum number of iterations for RMHC search
+        '''
+    
+        SinglePositionSLAM.__init__(self, laser, map_size_pixels, map_size_meters, 
+            map_quality, hole_width_mm)
+            
+        if not random_seed:
+            random_seed = int(time.time()) & 0xFFFF
+            
+        self.randomizer = pybreezyslam.Randomizer(random_seed)
+
+        self.sigma_xy_mm = sigma_xy_mm
+        self.sigma_theta_degrees = sigma_theta_degrees
+        self.max_search_iter = max_search_iter
+        
+    def update(self, scan_mm, velocities=None):
+
+        if not velocities:
+        
+            velocities = (0, 0, 0)
+    
+        CoreSLAM.update(self, scan_mm, velocities)    
+    
+    def _getNewPosition(self, start_position):
+        '''
+        Implements the _getNewPosition() method of SinglePositionSLAM. Uses Random-Mutation Hill-Climbing
+        search to look for a better position and angle based on Visual Light Positioning by mercatord (http://github.com/kareldecoster/mercator).
+        '''     
+        vlp_position =  start_position.copy()
+        file_x = open("/var/lib/mercator/x","r")
+        file_y = open("/var/lib/mercator/y","r")
+        x = 1000.00 * float(file_x.read(10))
+        y = 1000.00 * float(file_y.read(10))
+        file_x.close()
+        file_y.close()
+        self.position.x_mm = x
+        self.position.y_mm = y
+        # RMHC search is implemented as a C extension for efficiency
+        return pybreezyslam.rmhcPositionSearch(
+            vlp_position, 
+            self.map, 
+            self.scan_for_distance, 
+            self.laser,
+            self.sigma_xy_mm,
+            self.sigma_theta_degrees,
+            self.max_search_iter,
+            self.randomizer)
+                             
+    def _random_normal(self, mu, sigma):
+        
+        return mu + self.randomizer.rnor() * sigma
+

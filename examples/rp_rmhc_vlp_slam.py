@@ -22,8 +22,8 @@ You should have received a copy of the GNU Lesser General Public License
 along with this code.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-MAP_SIZE_PIXELS         = 500
-MAP_SIZE_METERS         = 3
+MAP_SIZE_PIXELS         = 5000
+MAP_SIZE_METERS         = 5
 LIDAR_DEVICE            = '/dev/ttyO1'
 
 from breezyslam.algorithms import VLP_RMHC_SLAM

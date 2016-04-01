@@ -147,10 +147,15 @@ class SinglePositionSLAM(CoreSLAM):
     with a single point (position). Implementing classes should provide the method
     
       _getNewPosition(self, start_position)
-      
+       
     to compute a new position based on searching from a starting position.
     '''
-
+    
+    #This function can be overridden when using VLP to obtain a different starting position
+    def _get_start_pos(self, map_size_meters):
+        init_coord_mm = 500 * map_size_meters # center of map
+        return pybreezyslam.Position(init_coord_mm, init_coord_mm, 0)
+        
     def __init__(self, laser, map_size_pixels, map_size_meters, 
                 map_quality=_DEFAULT_MAP_QUALITY, hole_width_mm=_DEFAULT_HOLE_WIDTH_MM):
 
@@ -158,8 +163,8 @@ class SinglePositionSLAM(CoreSLAM):
             map_quality, hole_width_mm)                    
                     
         # Initialize the position (x, y, theta)
-        init_coord_mm = 500 * map_size_meters # center of map
-        self.position =  pybreezyslam.Position(init_coord_mm, init_coord_mm, 0)
+
+        self.position =  self._get_start_pos(map_size_meters)
         
     def _updateMapAndPointcloud(self, velocities):
         '''
@@ -327,15 +332,24 @@ class VLP_SLAM(SinglePositionSLAM):
         '''
         
         SinglePositionSLAM.__init__(self, laser, map_size_pixels, map_size_meters, 
-            map_quality, hole_width_mm)                    
-       
+            map_quality, hole_width_mm)    
+                            
+    def _get_start_pos(self, map_size_meters):
+        file_x = open("/var/lib/mercator/x","r")
+        x = 1000 * float(file_x.read(10))
+        file_x.close()
+        file_y = open("/var/lib/mercator/y","r")
+        y = 1000 * float(file_y.read(10))
+        file_y.close()
+        return pybreezyslam.Position(x, y, 0)
+           
     def _getNewPosition(self, start_position):
         '''
         Implements the _getNewPosition() method of SinglePositionSLAM. Reads in x and y coordinates from
         files /var/lib/mercator/x and /var/lib/mercator/y. The mercatord daemon writes the position 
         obtained by visual light positioning here. The values posted are in meters. Mercatord can be found at http://github.com/kareldecoster/mercator
         '''
-        file_up = fopen("/var/lib/mercator/isup","r")
+        file_up = open("/var/lib/mercator/isup","r")
         if(int(file_up.read(1)) == 1):
             file_x = open("/var/lib/mercator/x","r")
             self.position.x_mm = 1000*float(file_x.read(10))
@@ -364,7 +378,7 @@ class VLP_RMHC_SLAM(SinglePositionSLAM):
     '''
     
     def __init__(self, laser, map_size_pixels, map_size_meters, 
-            map_quality=_DEFAULT_MAP_QUALITY, hole_width_mm=_DEFAULT_HOLE_WIDTH_MM,
+            map_quality=_DEFAULT_MAP_QUALITY, hole_width_mm=100,
             random_seed=None, sigma_xy_mm=_VLP_SIGMA_XY_MM, sigma_theta_degrees=_DEFAULT_SIGMA_THETA_DEGREES, 
             max_search_iter=_VLP_MAX_SEARCH_ITER):
         '''
@@ -393,6 +407,15 @@ class VLP_RMHC_SLAM(SinglePositionSLAM):
         self.sigma_xy_mm = sigma_xy_mm
         self.sigma_theta_degrees = sigma_theta_degrees
         self.max_search_iter = max_search_iter
+    
+    def _get_start_pos(self, map_size_meters):
+        file_x = open("/var/lib/mercator/x","r")
+        x = 1000 * float(file_x.read(10))
+        file_x.close()
+        file_y = open("/var/lib/mercator/y","r")
+        y = 1000 * float(file_y.read(10))
+        file_y.close()
+        return pybreezyslam.Position(x, y, 0)
         
     def update(self, scan_mm, velocities=None):
 
@@ -410,13 +433,15 @@ class VLP_RMHC_SLAM(SinglePositionSLAM):
         vlp_position =  start_position.copy()
         file_x = open("/var/lib/mercator/x","r")
         file_y = open("/var/lib/mercator/y","r")
-        x = 1000.00 * float(file_x.read(10))
-        y = 1000.00 * float(file_y.read(10))
-        file_x.close()
-        file_y.close()
-        if(x>=0.0 and x<=3000 and y>=0.0 and y<=3000):
+        try:
+            x = 1000.00 * float(file_x.read(10))
+            y = 1000.00 * float(file_y.read(10))
             self.position.x_mm = x
             self.position.y_mm = y
+        except ValueError, e:
+            print "could not convert X Y to float\n"
+        file_x.close()
+        file_y.close()
         # RMHC search is implemented as a C extension for efficiency
         return pybreezyslam.rmhcPositionSearch(
             vlp_position, 
