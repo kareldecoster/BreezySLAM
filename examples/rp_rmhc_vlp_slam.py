@@ -45,8 +45,6 @@ def mm2pix(mm):
     return int(mm / (MAP_SIZE_METERS * 1000. / MAP_SIZE_PIXELS))  
     
 def signal_handler(signal, frame):
-        print('You pressed Ctrl+C!')
-        #sys.exit(0)
         global done 
         done = 1
         
@@ -63,19 +61,12 @@ if __name__ == '__main__':
 
     # Initialize empty map
     mapbytes = bytearray(MAP_SIZE_PIXELS * MAP_SIZE_PIXELS)
-    print "starting sleep.."
     time.sleep(120)
-    print "waking up.."
     while done == 0:
 
         # Update SLAM with current Lidar scan, using first element of (scan, quality) pairs
         slam.update([pair[0] for pair in lidar.getScan()])
-        distances = [pair[0] for pair in lidar.getScan()]
-        my_angle = 0
-        print "NEW MEASUREMENT"
-        while my_angle < 360:
-            print "          angle = {angle}       distance = {distance}".format(angle = my_angle, distance = distances[my_angle])
-            my_angle = my_angle + 1
+        
         # Get current robot position
         x, y, theta = slam.getpos()
         
