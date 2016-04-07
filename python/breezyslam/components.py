@@ -4,6 +4,12 @@ BreezySLAM: Simple, efficient SLAM in Python
 components.py: SLAM components (Laser, Map, Position, Scan, Map),
 implemented as C extensions for efficiency. 
 
+Added RPLidar class by
+Author: Karel De Coster
+Github: http://github.com/kareldecoster/BreezySLAM
+Date: 2016-4-7
+
+Original by:
 Copyright (C) 2014 Simon D. Levy
 
 This code is free software: you can redistribute it and/or modify
@@ -73,6 +79,6 @@ class RPLidar(Laser):
 	'''
 	A class for the RPLidar
 	'''
-	def __init__(self, detectionMargin = 0, offsetMilimeters = 0):
+	def __init__(self, detectionMargin = 0, offsetMilimeters = 105):
 		
 		Laser.__init__(self, 360, 5.5, 360, 6000, detectionMargin, offsetMilimeters)

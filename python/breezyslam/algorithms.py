@@ -1,6 +1,11 @@
 '''
 BreezySLAM: Simple, efficient SLAM in Python
 
+VLP classes added by 
+Author: Karel De Coster
+Github: http://github.com/kareldecoster/BreezySLAM
+Date: 2016-4-7
+
 algorithms.py: SLAM algorithms
 
 Copyright (C) 2014 Simon D. Levy

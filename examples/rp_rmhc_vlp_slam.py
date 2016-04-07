@@ -3,6 +3,10 @@
 '''
 rpslam.py : BreezySLAM Python with RPLidar and Visual Light Positioning from mercator (http://github.com/kareldecoster/mercator)
 
+Author: Karel De Coster (k.decoster94@gmail.com)
+Github: http://github.com/kareldecoster/BreezySLAM
+Date: 2016-4-7
+
 based on xcslam.py by Simon D. Levy (http://github.com/simondlevy/breezyslam)
 
                 
@@ -24,7 +28,7 @@ along with this code.  If not, see <http://www.gnu.org/licenses/>.
 
 MAP_SIZE_PIXELS         = 5000
 MAP_SIZE_METERS         = 5
-LIDAR_DEVICE            = '/dev/ttyO1'
+LIDAR_DEVICE            = '/dev/ttyO5'
 
 from breezyslam.algorithms import VLP_RMHC_SLAM
 from breezyslam.components import RPLidar as LaserModel

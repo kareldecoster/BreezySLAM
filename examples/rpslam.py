@@ -3,7 +3,11 @@
 '''
 rpslam.py : BreezySLAM Python with RPLidar and Visual Light Positioning from mercator (http://github.com/kareldecoster/mercator)
 
-based on xcslam.py by Simon D. Levy (http://github.com/simondlevy/breezyslam)
+Author: Karel De Coster
+Github: http://github.com/kareldecoster/BreezySLAM
+Date: 2016-4-7
+
+based on xvslam.py by Simon D. Levy (http://github.com/simondlevy/breezyslam)
 
                 
 Copyright (C) 2016 Simon D. Levy
