@@ -66,6 +66,11 @@ if __name__ == '__main__':
     # Initialize empty map
     mapbytes = bytearray(MAP_SIZE_PIXELS * MAP_SIZE_PIXELS)
     time.sleep(120)
+    
+    # Initialize flags & cooldown timer for saving map
+    start_time = time.clock()
+    save_flag = 0
+    
     while done == 0:
 
         # Update SLAM with current Lidar scan, using first element of (scan, quality) pairs
@@ -76,6 +81,31 @@ if __name__ == '__main__':
         
         trajectory.append((x,y))
         
+        current_time = time.clock()
+        
+        if (int(current_time - start_time)%30) == 3 :
+            if save_flag == 1:
+                save_flag = 0
+                # Get current map bytes as grayscale
+                slam.getmap(mapbytes)
+
+                # Put trajectory into map as black pixels
+                for coords in trajectory:
+                            
+                    x_mm, y_mm = coords
+                                           
+                    x_pix = mm2pix(x_mm)
+                    y_pix = mm2pix(y_mm)
+                                                                                                          
+                    mapbytes[y_pix * MAP_SIZE_PIXELS + x_pix] = 0;
+                                
+                # Save map and trajectory as PNG file
+                image = Image.frombuffer('L', (MAP_SIZE_PIXELS, MAP_SIZE_PIXELS), mapbytes, 'raw', 'L', 0, 1)
+                image.save('slam_map.png')
+        else:
+            save_flag = 1
+    
+    #End of loop
     # Get current map bytes as grayscale
     slam.getmap(mapbytes)
 
