@@ -82,3 +82,10 @@ class RPLidar(Laser):
 	def __init__(self, detectionMargin = 0, offsetMilimeters = 105):
 		
 		Laser.__init__(self, 360, 5.5, 360, 6000, detectionMargin, offsetMilimeters)
+		
+class simLidar(Laser):
+    '''
+    simulation class
+    '''
+    def __init__(self, detectionMargin = 0, offsetMilimeters = 0):
+        Laser.__init__(self,360, 5.5, 360, 6000, detectionMargin, offsetMilimeters)		

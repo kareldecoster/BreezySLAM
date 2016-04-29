@@ -31,9 +31,9 @@ MAP_SIZE_METERS         = 5
 LIDAR_DEVICE            = '/dev/ttyO5'
 
 from breezyslam.algorithms import VLP_RMHC_SLAM
-from breezyslam.components import RPLidar as LaserModel
+from breezyslam.components import simLidar as LaserModel
 
-from rplidar import RPLidar
+from simlidar import simLidar
 
 from PIL import Image
 
@@ -55,7 +55,7 @@ def signal_handler(signal, frame):
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
     # Connect to Lidar unit
-    lidar = RPLidar(LIDAR_DEVICE)
+    lidar = simLidar(LIDAR_DEVICE)
     
     # Create an RMHC SLAM object with a laser model and optional robot model
     slam = VLP_RMHC_SLAM(LaserModel(), MAP_SIZE_PIXELS, MAP_SIZE_METERS)
@@ -65,18 +65,17 @@ if __name__ == '__main__':
 
     # Initialize empty map
     mapbytes = bytearray(MAP_SIZE_PIXELS * MAP_SIZE_PIXELS)
-    time.sleep(120)
+    #time.sleep(120)
     print "Ready to drive.\n"
     # Initialize flags & cooldown timer for saving map
     start_time = time.clock()
     save_flag = 0
     
     while done == 0:
-        time.sleep(1) #Do not hog processing power
+
         # Update SLAM with current Lidar scan, using first element of (scan, quality) pairs
-        scan = [pair[0] for pair in lidar.getScan()]
-        print "distance 0 = {dist}".format(dist=scan[0])
-        slam.update(scan)
+        slam.update([pair[0] for pair in lidar.getScan()])
+        
         # Get current robot position
         x, y, theta = slam.getpos()
         
@@ -84,8 +83,7 @@ if __name__ == '__main__':
         
         current_time = time.clock()
         
-        print "Executed.. angle = {theta}".format(theta = theta)
-        print "\n\n"
+        print "Executed.. Pos = {x} , {y}".format(x=x, y=y)
         if (int(current_time - start_time)%30) == 3 :
             if save_flag == 1:
                 save_flag = 0
@@ -125,9 +123,6 @@ if __name__ == '__main__':
     # Save map and trajectory as PNG file
     image = Image.frombuffer('L', (MAP_SIZE_PIXELS, MAP_SIZE_PIXELS), mapbytes, 'raw', 'L', 0, 1)
     image.save('slam_map.png')
-    
-    # Tell lidar to shutdown
-    lidar.set_exitflag()
 
     exit(0)
      
