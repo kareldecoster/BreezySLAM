@@ -38,7 +38,7 @@ _DEFAULT_HOLE_WIDTH_MM       = 600
 
 # Random mutation hill-climbing (RMHC) params
 _DEFAULT_SIGMA_XY_MM         = 100
-_VLP_SIGMA_XY_MM			 = 50
+_VLP_SIGMA_XY_MM			 = 100
 _DEFAULT_SIGMA_THETA_DEGREES = 20
 _DEFAULT_MAX_SEARCH_ITER     = 1000
 _VLP_MAX_SEARCH_ITER	     = 100
@@ -385,7 +385,7 @@ class VLP_RMHC_SLAM(SinglePositionSLAM):
     def __init__(self, laser, map_size_pixels, map_size_meters, 
             map_quality=_DEFAULT_MAP_QUALITY, hole_width_mm=100,
             random_seed=None, sigma_xy_mm=_VLP_SIGMA_XY_MM, sigma_theta_degrees=_DEFAULT_SIGMA_THETA_DEGREES, 
-            max_search_iter=_VLP_MAX_SEARCH_ITER):
+            max_search_iter=_DEFAULT_MAX_SEARCH_ITER):
         '''
         Creates a RMHCSlam object suitable for updating with new Lidar and odometry data.
         laser is a Laser object representing the specifications of your Lidar unit
@@ -442,13 +442,12 @@ class VLP_RMHC_SLAM(SinglePositionSLAM):
             y = 1000.00 * float(file_y.read(5))
             start_position.x_mm = x
             start_position.y_mm = y
-            print "Read X = {x} | Y = {y}".format(x=x, y=y)
         except ValueError, e:
             print "could not convert X Y to float\n"
         file_x.close()
         file_y.close()
-        print "self.position = {x} {y}".format(x=self.position.x_mm, y=self.position.y_mm)
         theta = self.position.theta_degrees
+        print " Theta before RMHC = {theta}".format(theta=theta)
         # RMHC search is implemented as a C extension for efficiency
         return pybreezyslam.rmhcPositionSearch(
             start_position, 
@@ -459,8 +458,6 @@ class VLP_RMHC_SLAM(SinglePositionSLAM):
             self.sigma_theta_degrees,
             self.max_search_iter,
             self.randomizer)
-        #print "return values: X = {x} | Y = {y} | theta = {theta}".format(x=x, y=y, theta=theta)
-        #return start_position
                              
     def _random_normal(self, mu, sigma):
         

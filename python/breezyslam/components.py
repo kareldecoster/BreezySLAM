@@ -88,4 +88,13 @@ class simLidar(Laser):
     simulation class
     '''
     def __init__(self, detectionMargin = 0, offsetMilimeters = 0):
-        Laser.__init__(self,360, 5.5, 360, 6000, detectionMargin, offsetMilimeters)		
+        Laser.__init__(self,360, 5.5, 360, 6000, detectionMargin, offsetMilimeters)	
+
+class socklidar(Laser):
+    '''
+    A class that reads in RPLidar data through a socket
+    '''
+    def __init__(self, detectionMargin = 0, offsetMilimeters = 0):
+        Laser.__init__(self,360, 5.5, 360, 6000, detectionMargin, offsetMilimeters)	
+        
+        		

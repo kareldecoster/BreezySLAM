@@ -443,13 +443,12 @@ class VLP_RMHC_SLAM(SinglePositionSLAM):
             start_position.x_mm = x
             start_position.y_mm = y
         except ValueError, e:
-            print "could not convert X Y to float\n"
+            #print "could not convert X Y to float\n"
         file_x.close()
         file_y.close()
         theta = self.position.theta_degrees
+        print " Theta before RMHC = {theta}".format(theta=theta)
         # RMHC search is implemented as a C extension for efficiency
-        print "start.theta = {theta}".format(theta = start_position.theta_degrees);
-        print "selftheta before rmhc = {theta}".format(theta = theta)
         return pybreezyslam.rmhcPositionSearch(
             start_position, 
             self.map, 
