@@ -66,12 +66,12 @@ if __name__ == '__main__':
 
     # Initialize empty map
     mapbytes = bytearray(MAP_SIZE_PIXELS * MAP_SIZE_PIXELS)
-    time.sleep(120)
+    time.sleep(10)
     print "Ready to drive.\n"
     # Initialize flags & cooldown timer for saving map
     start_time = time.clock()
     save_flag = 0
-    
+    loop = 0
     while done == 0:
         # Update SLAM with current Lidar scan, using first element of (scan, quality) pairs
         slam.update([pair[0] for pair in lidar.getScan()])
@@ -83,7 +83,7 @@ if __name__ == '__main__':
         
         current_time = time.clock()
         
-        if (int(current_time - start_time)%30) == 3 :
+        if (int(current_time - start_time)%4) == 3 :
             if save_flag == 1:
                 save_flag = 0
                 # Get current map bytes as grayscale
@@ -101,7 +101,9 @@ if __name__ == '__main__':
                                 
                 # Save map and trajectory as PNG file
                 image = Image.frombuffer('L', (MAP_SIZE_PIXELS, MAP_SIZE_PIXELS), mapbytes, 'raw', 'L', 0, 1)
-                image.save('slam_map.png')
+                name = 'slam_map_' + str(loop) + '.png'
+                image.save(name)
+                loop = loop + 1
         else:
             save_flag = 1
     
@@ -121,7 +123,8 @@ if __name__ == '__main__':
                     
     # Save map and trajectory as PNG file
     image = Image.frombuffer('L', (MAP_SIZE_PIXELS, MAP_SIZE_PIXELS), mapbytes, 'raw', 'L', 0, 1)
-    image.save('slam_map.png')
+    name = 'slam_map_' + str(loop) + '.png'
+    image.save(name)
     
     # Tell lidar to shutdown
     lidar.set_exitflag()

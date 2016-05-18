@@ -40,8 +40,9 @@ _DEFAULT_HOLE_WIDTH_MM       = 600
 _DEFAULT_SIGMA_XY_MM         = 100
 _VLP_SIGMA_XY_MM			 = 100
 _DEFAULT_SIGMA_THETA_DEGREES = 20
+_VLP_SIGMA_THETA_DEGREES     = 30
 _DEFAULT_MAX_SEARCH_ITER     = 1000
-_VLP_MAX_SEARCH_ITER	     = 100
+_VLP_MAX_SEARCH_ITER	     = 10000
 
 
 # CoreSLAM class ------------------------------------------------------------------------------------------------------
@@ -384,8 +385,8 @@ class VLP_RMHC_SLAM(SinglePositionSLAM):
     
     def __init__(self, laser, map_size_pixels, map_size_meters, 
             map_quality=_DEFAULT_MAP_QUALITY, hole_width_mm=100,
-            random_seed=None, sigma_xy_mm=_VLP_SIGMA_XY_MM, sigma_theta_degrees=_DEFAULT_SIGMA_THETA_DEGREES, 
-            max_search_iter=_DEFAULT_MAX_SEARCH_ITER):
+            random_seed=None, sigma_xy_mm=_VLP_SIGMA_XY_MM, sigma_theta_degrees=_VLP_SIGMA_THETA_DEGREES, 
+            max_search_iter=_VLP_MAX_SEARCH_ITER):
         '''
         Creates a RMHCSlam object suitable for updating with new Lidar and odometry data.
         laser is a Laser object representing the specifications of your Lidar unit
@@ -443,7 +444,8 @@ class VLP_RMHC_SLAM(SinglePositionSLAM):
             start_position.x_mm = x
             start_position.y_mm = y
         except ValueError, e:
-            #print "could not convert X Y to float\n"
+        #print "could not convert X Y to float\n"
+            pass
         file_x.close()
         file_y.close()
         theta = self.position.theta_degrees
